@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  # redis
+  sadlier-redis:
+    container_name: sadlier-redis
+    image: redis:7.2-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - sadlier-network
+  
+  # zookeeper
+  sadlier-zookeeper:
+    container_name: sadlier-zookeeper
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    restart: unless-stopped
+    ports:
+      - "22181:2181"
+    networks:
+      - sadlier-network
+  
+  # kafka
+  sadlier-kafka:
+    container_name: sadlier-kafka
+    image: confluentinc/cp-kafka:latest
+    restart: unless-stopped
+    ports:
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: sadlier-zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://sadlier-kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - sadlier-zookeeper
+    networks:
+      - sadlier-network
+
+networks:
+  sadlier-network:
+    driver: bridge
